@@ -1,0 +1,415 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TV Launcher Cho Người Già</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome Icons CDN -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        /* Tối ưu hóa phông chữ và reset cho TV */
+        body {
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background-color: #0d0f12;
+            color: #ffffff;
+            overflow: hidden; /* Dành cho trải nghiệm TV fullscreen */
+            user-select: none;
+            -webkit-user-select: none;
+        }
+
+        /* Hiệu ứng Focus phát sáng rõ ràng cho người già */
+        .focusable {
+            transition: transform 0.15s ease-out, box-shadow 0.15s ease-out, border-color 0.15s ease-out;
+            border: 4px solid transparent;
+            outline: none;
+        }
+
+        .focusable:focus, .focusable.focused {
+            transform: scale(1.05);
+            border-color: #facc15; /* Vàng rực rỡ thu hút thị giác */
+            box-shadow: 0 0 25px rgba(250, 204, 21, 0.8), inset 0 0 10px rgba(250, 204, 21, 0.3);
+            z-index: 20;
+        }
+
+        /* Tối ưu hóa font siêu to & rõ ràng */
+        .text-giant {
+            font-size: 4rem;
+            line-height: 1;
+        }
+        .text-big {
+            font-size: 2.25rem;
+            line-height: 2.5rem;
+        }
+
+        /* Giảm tải animation cho CPU TV cũ */
+        * {
+            box-sizing: border-box;
+        }
+
+        /* Modal Overlay */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.85);
+            z-index: 50;
+            justify-content: center;
+            align-items: center;
+        }
+        .modal.active {
+            display: flex;
+        }
+    </style>
+</head>
+<body class="h-screen w-screen p-6 flex flex-col justify-between bg-black text-white">
+
+    <!-- HEADER: Lời chào, Đồng hồ siêu to, Thời tiết -->
+    <header class="flex justify-between items-center bg-gray-900/80 p-6 rounded-3xl border border-gray-800 shadow-lg">
+        <div class="flex items-center space-x-4">
+            <div class="w-16 h-16 rounded-full bg-amber-500 flex items-center justify-center text-black font-bold text-3xl">
+                <i class="fa-solid fa-heart"></i>
+            </div>
+            <div>
+                <h1 id="greeting" class="text-3xl font-extrabold text-amber-400">Chúc Ông/Bà một ngày vui vẻ!</h1>
+                <p id="date-display" class="text-xl text-gray-300 font-semibold mt-1">Đang tải ngày tháng...</p>
+            </div>
+        </div>
+
+        <!-- Đồng hồ cực to -->
+        <div class="text-right">
+            <div id="clock-display" class="text-6xl font-black text-yellow-300 tracking-wider font-mono">00:00</div>
+            <div class="text-lg text-emerald-400 font-bold flex items-center justify-end gap-2 mt-1">
+                <i class="fa-solid fa-cloud-sun text-yellow-400"></i>
+                <span>TP. Hồ Chí Minh: 29°C - Nắng nhẹ</span>
+            </div>
+        </div>
+    </header>
+
+    <!-- MAIN GRID: Các Nút Chức Năng Chính (Chữ Siêu To + Màu Phân Biệt) -->
+    <main class="grid grid-cols-3 gap-6 my-auto py-2" id="grid-container">
+        
+        <!-- Nút 1: Xem TV / VTV -->
+        <div tabindex="0" data-action="vtv" class="focusable bg-red-700 hover:bg-red-600 rounded-3xl p-6 flex flex-col items-center justify-center text-center cursor-pointer shadow-2xl h-52">
+            <i class="fa-solid fa-tv text-6xl mb-3 text-white"></i>
+            <span class="text-3xl font-black text-white uppercase tracking-wide">XEM TV / VTV</span>
+            <span class="text-lg text-red-200 mt-1 font-medium">Thời sự, Tin tức, VTV1, VTV3</span>
+        </div>
+
+        <!-- Nút 2: YouTube -->
+        <div tabindex="0" data-action="youtube" class="focusable bg-rose-600 hover:bg-rose-500 rounded-3xl p-6 flex flex-col items-center justify-center text-center cursor-pointer shadow-2xl h-52">
+            <i class="fa-brands fa-youtube text-6xl mb-3 text-white"></i>
+            <span class="text-3xl font-black text-white uppercase tracking-wide">YOUTUBE</span>
+            <span class="text-lg text-rose-100 mt-1 font-medium">Chuyện xưa, Cải lương, Ca nhạc</span>
+        </div>
+
+        <!-- Nút 3: Karaoke / Nhạc Vàng -->
+        <div tabindex="0" data-action="karaoke" class="focusable bg-purple-700 hover:bg-purple-600 rounded-3xl p-6 flex flex-col items-center justify-center text-center cursor-pointer shadow-2xl h-52">
+            <i class="fa-solid fa-microphone-lines text-6xl mb-3 text-white"></i>
+            <span class="text-3xl font-black text-white uppercase tracking-wide">KARAOKE</span>
+            <span class="text-lg text-purple-200 mt-1 font-medium">Hát Karaoke, Nhạc Vàng, Quê Hương</span>
+        </div>
+
+        <!-- Nút 4: Thời tiết & Tin tức -->
+        <div tabindex="0" data-action="news" class="focusable bg-blue-700 hover:bg-blue-600 rounded-3xl p-6 flex flex-col items-center justify-center text-center cursor-pointer shadow-2xl h-52">
+            <i class="fa-solid fa-newspaper text-6xl mb-3 text-white"></i>
+            <span class="text-3xl font-black text-white uppercase tracking-wide">ĐỌC BÁO / THỜI TIẾT</span>
+            <span class="text-lg text-blue-200 mt-1 font-medium">Dự báo thời tiết & Tin tức mới</span>
+        </div>
+
+        <!-- Nút 5: Gọi Cho Con Cháu -->
+        <div tabindex="0" data-action="call" class="focusable bg-emerald-700 hover:bg-emerald-600 rounded-3xl p-6 flex flex-col items-center justify-center text-center cursor-pointer shadow-2xl h-52">
+            <i class="fa-solid fa-phone-volume text-6xl mb-3 text-white"></i>
+            <span class="text-3xl font-black text-white uppercase tracking-wide">GỌI CON CHÁU</span>
+            <span class="text-lg text-emerald-200 mt-1 font-medium">Danh bạ gia đình nhanh</span>
+        </div>
+
+        <!-- Nút 6: Cài đặt / Hướng dẫn -->
+        <div tabindex="0" data-action="help" class="focusable bg-gray-800 hover:bg-gray-700 rounded-3xl p-6 flex flex-col items-center justify-center text-center cursor-pointer shadow-2xl h-52 border border-gray-700">
+            <i class="fa-solid fa-circle-question text-6xl mb-3 text-amber-400"></i>
+            <span class="text-3xl font-black text-white uppercase tracking-wide">HƯỚNG DẪN</span>
+            <span class="text-lg text-gray-300 mt-1 font-medium">Cách dùng điều khiển / Remote</span>
+        </div>
+
+    </main>
+
+    <!-- FOOTER: Bảng hướng dẫn phím tắt Remote -->
+    <footer class="bg-gray-900/90 border border-gray-800 rounded-2xl p-4 flex justify-between items-center text-xl font-bold">
+        <div class="flex items-center space-x-6 text-gray-300">
+            <span class="flex items-center gap-2">
+                <span class="bg-gray-800 text-yellow-400 border border-yellow-400 px-3 py-1 rounded-lg text-base">▲ ▼ ◄ ►</span> 
+                Di chuyển
+            </span>
+            <span class="flex items-center gap-2">
+                <span class="bg-yellow-400 text-black px-3 py-1 rounded-lg text-base font-extrabold">OK / ENTER</span> 
+                Chọn mở
+            </span>
+            <span class="flex items-center gap-2">
+                <span class="bg-red-600 text-white px-3 py-1 rounded-lg text-base font-extrabold">BACK / ESC</span> 
+                Quay lại
+            </span>
+        </div>
+        <div class="text-amber-400 font-extrabold text-lg flex items-center gap-2">
+            <i class="fa-solid fa-tv"></i> Chế độ TV Lớn (Mượt & Nhẹ)
+        </div>
+    </footer>
+
+    <!-- MODAL HIỂN THỊ CHI TIẾT KHI CHỌN NÚT (Dành cho demo tương tác) -->
+    <div id="action-modal" class="modal">
+        <div class="bg-gray-900 border-4 border-yellow-400 rounded-3xl p-8 max-w-2xl w-full text-center shadow-2xl">
+            <div id="modal-icon" class="text-7xl mb-4 text-yellow-400"></div>
+            <h2 id="modal-title" class="text-4xl font-extrabold mb-4 text-white">Tiêu đề</h2>
+            <p id="modal-desc" class="text-2xl text-gray-300 mb-8 leading-relaxed">Nội dung chi tiết...</p>
+            <div class="flex justify-center gap-4">
+                <button id="modal-confirm-btn" class="focusable bg-emerald-600 hover:bg-emerald-500 text-white text-2xl font-extrabold py-4 px-8 rounded-2xl border-2 border-white">
+                    <i class="fa-solid fa-check mr-2"></i> Đồng Ý / Mở Ngay
+                </button>
+                <button id="modal-close-btn" class="focusable bg-red-600 hover:bg-red-500 text-white text-2xl font-extrabold py-4 px-8 rounded-2xl border-2 border-white">
+                    <i class="fa-solid fa-xmark mr-2"></i> Đóng lại (Back)
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- SCRIPT ĐIỀU KHIỂN BẰNG REMOTE / BÀN PHÍM & THỜI GIAN -->
+    <script>
+        // --- 1. CẬP NHẬT ĐỒNG HỒ VÀ NGÀY THÁNG TIẾNG VIỆT ---
+        function updateClock() {
+            const now = new Date();
+            
+            // Giờ : Phút
+            const hours = String(now.getHours()).padStart(2, '0');
+            const minutes = String(now.getMinutes()).padStart(2, '0');
+            document.getElementById('clock-display').innerText = `${hours}:${minutes}`;
+
+            // Định dạng ngày Tiếng Việt
+            const days = ['Chủ Nhật', 'Thứ Hai', 'Thứ Ba', 'Thứ Tư', 'Thứ Năm', 'Thứ Sáu', 'Thứ Bảy'];
+            const dayName = days[now.getDay()];
+            const day = String(now.getDate()).padStart(2, '0');
+            const month = String(now.getMonth() + 1).padStart(2, '0');
+            const year = now.getFullYear();
+
+            document.getElementById('date-display').innerText = `${dayName}, ngày ${day}/${month}/${year}`;
+
+            // Thay đổi lời chào theo buổi
+            const currentHour = now.getHours();
+            const greetingEl = document.getElementById('greeting');
+            if (currentHour >= 5 && currentHour < 11) {
+                greetingEl.innerText = "Chúc Ông/Bà một buổi sáng an lành!";
+            } else if (currentHour >= 11 && currentHour < 14) {
+                greetingEl.innerText = "Chúc Ông/Bà buổi trưa vui vẻ!";
+            } else if (currentHour >= 14 && currentHour < 18) {
+                greetingEl.innerText = "Chúc Ông/Bà buổi chiều nhiều sức khỏe!";
+            } else {
+                greetingEl.innerText = "Chúc Ông/Bà buổi tối ấm áp bên gia đình!";
+            }
+        }
+
+        setInterval(updateClock, 1000);
+        updateClock();
+
+        // --- 2. ĐIỀU KHIỂN BẰNG REMOTE (PHÍM MŨI TÊN, ENTER, BACK) ---
+        const focusables = Array.from(document.querySelectorAll('.focusable'));
+        let currentIndex = 0;
+
+        // Đặt focus ban đầu vào mục đầu tiên
+        function setFocus(index) {
+            if (index < 0) index = 0;
+            if (index >= focusables.length) index = focusables.length - 1;
+            
+            focusables.forEach((el, idx) => {
+                if (idx === index) {
+                    el.classList.add('focused');
+                    el.focus();
+                } else {
+                    el.classList.remove('focused');
+                }
+            });
+            currentIndex = index;
+        }
+
+        // Khởi tạo Focus đầu tiên khi tải trang
+        window.addEventListener('load', () => {
+            setFocus(0);
+        });
+
+        // Xử lý phím Remote/Bàn phím
+        document.addEventListener('keydown', (e) => {
+            const isModalOpen = document.getElementById('action-modal').classList.contains('active');
+            
+            // Nếu Modal đang mở
+            if (isModalOpen) {
+                if (e.key === 'Escape' || e.key === 'Backspace' || e.key === 'GoBack') {
+                    closeModal();
+                    e.preventDefault();
+                }
+                return;
+            }
+
+            const columns = 3; // Grid có 3 cột
+            const totalItems = document.querySelectorAll('#grid-container .focusable').length;
+
+            switch(e.key) {
+                case 'ArrowRight':
+                    if ((currentIndex + 1) % columns !== 0 && currentIndex + 1 < totalItems) {
+                        setFocus(currentIndex + 1);
+                    }
+                    e.preventDefault();
+                    break;
+                case 'ArrowLeft':
+                    if (currentIndex % columns !== 0) {
+                        setFocus(currentIndex - 1);
+                    }
+                    e.preventDefault();
+                    break;
+                case 'ArrowDown':
+                    if (currentIndex + columns < totalItems) {
+                        setFocus(currentIndex + columns);
+                    }
+                    e.preventDefault();
+                    break;
+                case 'ArrowUp':
+                    if (currentIndex - columns >= 0) {
+                        setFocus(currentIndex - columns);
+                    }
+                    e.preventDefault();
+                    break;
+                case 'Enter':
+                case 'Select':
+                    const currentEl = focusables[currentIndex];
+                    if (currentEl) {
+                        currentEl.click();
+                    }
+                    e.preventDefault();
+                    break;
+                case 'Escape':
+                case 'Backspace':
+                case 'GoBack':
+                    // Chuẩn hóa nút quay lại cho TV
+                    closeModal();
+                    e.preventDefault();
+                    break;
+            }
+        });
+
+        // Mouse hover đồng bộ focus để hỗ trợ cả chuột lẫn remote
+        focusables.forEach((el, idx) => {
+            el.addEventListener('mouseenter', () => {
+                setFocus(idx);
+            });
+            el.addEventListener('click', () => {
+                const action = el.getAttribute('data-action');
+                handleAction(action);
+            });
+        });
+
+        // --- 3. XỬ LÝ HÀNH ĐỘNG KHI CHỌN NÚT ---
+        const modal = document.getElementById('action-modal');
+        const modalTitle = document.getElementById('modal-title');
+        const modalDesc = document.getElementById('modal-desc');
+        const modalIcon = document.getElementById('modal-icon');
+        const modalConfirmBtn = document.getElementById('modal-confirm-btn');
+        let currentTargetUrl = '';
+
+        function handleAction(action) {
+            switch(action) {
+                case 'vtv':
+                    showModal(
+                        'fa-solid fa-tv',
+                        'MỞ TRUYỀN HÌNH VTV',
+                        'Chương trình Thời Sự, Tin Tức, phim truyện trên kênh VTV1, VTV3.',
+                        'https://vtvgo.vn'
+                    );
+                    break;
+                case 'youtube':
+                    showModal(
+                        'fa-brands fa-youtube',
+                        'MỞ YOUTUBE',
+                        'Xem Video Chuyện Xưa, Cải Lương, Ca Nhạc, Tin Tức Mới Nhất.',
+                        'https://www.youtube.com'
+                    );
+                    break;
+                case 'karaoke':
+                    showModal(
+                        'fa-solid fa-microphone-lines',
+                        'HÁT KARAOKE / NHẠC VÀNG',
+                        'Mở các bài hát Karaoke Nhạc Vàng, Quê Hương chọn lọc dành cho Ông/Bà.',
+                        'https://www.youtube.com/results?search_query=karaoke+nhac+vang+chu+to'
+                    );
+                    break;
+                case 'news':
+                    showModal(
+                        'fa-solid fa-newspaper',
+                        'ĐỌC BÁO & THỜI TIẾT',
+                        'Xem dự báo thời tiết chi tiết và tin tức báo chí cập nhật hàng ngày.',
+                        'https://tuoitre.vn'
+                    );
+                    break;
+                case 'call':
+                    showModal(
+                        'fa-solid fa-phone-volume',
+                        'DANH BẠ GỌI CON CHÁU',
+                        '• Con Trai Cả: 0901.234.567\n• Con Gái Út: 0988.765.432\n• Cháu Nội: 0912.345.678',
+                        'tel:0901234567'
+                    );
+                    break;
+                case 'help':
+                    showModal(
+                        'fa-solid fa-circle-question',
+                        'HƯỚNG DẪN SỬ DỤNG REMOTE',
+                        '1. Bấm phím MŨI TÊN (▲ ▼ ◄ ►) để di chuyển viền VÀNG vào mục muốn xem.\n2. Bấm phím OK / ENTER để chọn mở.\n3. Bấm phím BACK / QUAY LẠI để thoát.',
+                        ''
+                    );
+                    break;
+            }
+        }
+
+        function showModal(iconClass, title, desc, targetUrl) {
+            modalIcon.innerHTML = `<i class="${iconClass}"></i>`;
+            modalTitle.innerText = title;
+            modalDesc.innerText = desc;
+            currentTargetUrl = targetUrl;
+
+            if (!targetUrl) {
+                modalConfirmBtn.style.display = 'none';
+            } else {
+                modalConfirmBtn.style.display = 'inline-block';
+            }
+
+            modal.classList.add('active');
+
+            // Tự động focus vào nút Đóng/Xác nhận trong modal
+            setTimeout(() => {
+                if (targetUrl) {
+                    modalConfirmBtn.focus();
+                } else {
+                    document.getElementById('modal-close-btn').focus();
+                }
+            }, 100);
+        }
+
+        function closeModal() {
+            modal.classList.remove('active');
+            setFocus(currentIndex); // Trả focus lại nút trên TV
+        }
+
+        document.getElementById('modal-close-btn').addEventListener('click', closeModal);
+
+        modalConfirmBtn.addEventListener('click', () => {
+            if (currentTargetUrl) {
+                if (currentTargetUrl.startsWith('tel:')) {
+                    alert('Đang thực hiện cuộc gọi đến số con cháu...');
+                } else {
+                    window.location.href = currentTargetUrl;
+                }
+            }
+            closeModal();
+        });
+    </script>
+</body>
+</html>
